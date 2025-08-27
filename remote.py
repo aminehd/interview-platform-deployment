@@ -8,8 +8,11 @@ from vertexai import agent_engines
 from vertexai.preview import reasoning_engines
 from google.cloud import storage
 
-# Import from interview_agents package (now part of the same Poetry workspace)
-from interview_agents import SimpleAgent
+# Import from interview-agents submodule
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'interview-agents'))
+from interview_agents import create_agent
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("project_id", None, "GCP project ID.")
@@ -67,8 +70,8 @@ def create_staging_bucket(project_id: str, location: str) -> str:
 
 def create() -> None:
     """Creates a new deployment."""
-    # Create agent instance (normal import from same Poetry workspace)
-    root_agent = SimpleAgent()
+    # Create ADK agent instance directly - this returns a proper BaseAgent
+    root_agent = create_agent()
     print(f"✅ Created agent: {root_agent.name}")
 
     # First wrap the agent in AdkApp
@@ -83,7 +86,7 @@ def create() -> None:
         requirements=[
             "google-cloud-aiplatform[adk,agent_engines]",
         ],
-        extra_packages=["./interview_agents"],
+        extra_packages=["./interview-agents"],
     )
     print(f"Created remote app: {remote_app.resource_name}")
 
@@ -112,9 +115,11 @@ def create_session(resource_id: str, user_id: str) -> None:
     remote_session = remote_app.create_session(user_id=user_id)
     print("Created session:")
     print(f"  Session ID: {remote_session['id']}")
-    print(f"  User ID: {remote_session['user_id']}")
-    print(f"  App name: {remote_session['app_name']}")
-    print(f"  Last update time: {remote_session['last_update_time']}")
+    print(f"  User ID: {user_id}")
+    if 'app_name' in remote_session:
+        print(f"  App name: {remote_session['app_name']}")
+    if 'last_update_time' in remote_session:
+        print(f"  Last update time: {remote_session['last_update_time']}")
     print("\nUse this session ID with --session_id when sending messages.")
 
 
