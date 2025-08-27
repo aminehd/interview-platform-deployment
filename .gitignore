@@ -63,6 +63,9 @@ poetry.lock
 *.swp
 *.swo
 
+# Local copy of interview-agents for deployment
+interview-agents-local/
+
 # OS
 .DS_Store
 Thumbs.db

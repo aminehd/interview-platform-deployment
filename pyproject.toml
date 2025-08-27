@@ -4,20 +4,33 @@ version = "0.1.0"
 description = "Deployment infrastructure for Interview Platform"
 authors = ["aminehd <aminehd@users.noreply.github.com>"]
 readme = "README.md"
-packages = [{include = "deployment"}]
+package-mode = false
+
 
 [tool.poetry.dependencies]
-python = "^3.12"
-google-cloud-aiplatform = "^1.38.0"
+python = ">=3.12"
+requests = "^2.31.0"
+google-adk = "^0.1.0"
+pydantic = "^2.11.3"
+python-dotenv = "^1.1.0"
+google-cloud-aiplatform = {extras = ["adk", "agent_engines"], version = "^1.42.1"}
+absl-py = "^2.1.0"
+cloudpickle = "^3.0.0"
 google-cloud-run = "^0.10.0"
 google-cloud-storage = "^2.10.0"
-absl-py = "^1.4.0"
 click = "^8.1.0"
+deprecated = "^1.2.14"
+
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
 black = "^23.0.0"
 flake8 = "^6.0.0"
+
+[tool.poetry.scripts]
+deploy-local = "deployment.local:main"
+deploy-remote = "deployment.remote:main"
+cleanup = "deployment.cleanup:cleanup_deployment"
 
 [build-system]
 requires = ["poetry-core"]
