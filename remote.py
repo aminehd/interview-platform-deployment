@@ -8,7 +8,8 @@ from vertexai import agent_engines
 from vertexai.preview import reasoning_engines
 from google.cloud import storage
 
-# Import moved to create() function to avoid pickling issues
+# Import from interview_agents package (now part of the same Poetry workspace)
+from interview_agents import SimpleAgent
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("project_id", None, "GCP project ID.")
@@ -29,6 +30,9 @@ flags.DEFINE_string(
     "Shorten this message: Hello, how are you doing today?",
     "Message to send to the agent.",
 )
+flags.DEFINE_bool("use_cache", True, "Use cached base images for faster builds.")
+flags.DEFINE_string("base_image", None, "Custom base image for deployment.")
+flags.DEFINE_bool("rebuild_base", False, "Force rebuild of base image.")
 flags.mark_bool_flags_as_mutual_exclusive(
     [
         "create",
@@ -63,23 +67,15 @@ def create_staging_bucket(project_id: str, location: str) -> str:
 
 def create() -> None:
     """Creates a new deployment."""
-    # Create a simple agent directly to avoid import issues
-    class SimpleAgent:
-        """A simple agent that works with Vertex AI."""
-        
-        def __init__(self):
-            self.name = "simple_agent"
-            self.description = "A simple agent for testing deployment"
-        
-        def query(self, input_data: str) -> str:
-            """Simple query method."""
-            return f"Processed: {input_data}"
-        
-        def __call__(self, input_data):
-            """Make the class callable."""
-            return self.query(input_data)
-    
-    app = SimpleAgent()
+    # Create agent instance (normal import from same Poetry workspace)
+    root_agent = SimpleAgent()
+    print(f"✅ Created agent: {root_agent.name}")
+
+    # First wrap the agent in AdkApp
+    app = reasoning_engines.AdkApp(
+        agent=root_agent,
+        enable_tracing=True,
+    )
 
     # Now deploy to Agent Engine
     remote_app = agent_engines.create(
@@ -87,6 +83,7 @@ def create() -> None:
         requirements=[
             "google-cloud-aiplatform[adk,agent_engines]",
         ],
+        extra_packages=["./interview_agents"],
     )
     print(f"Created remote app: {remote_app.resource_name}")
 
